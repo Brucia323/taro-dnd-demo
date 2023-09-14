@@ -1,6 +1,6 @@
 {
   "name": "taro-dnd",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "taro drag and drop",
   "templateInfo": {

@@ -3,13 +3,6 @@ import Taro from '@tarojs/taro';
 import { useState } from 'react';
 import './demo.css';
 
-//滑块移动标记
-let swap = false;
-let scrollTop = 0;
-const editMemoryBox = {
-  editing: false,
-  showEditMemoryBoxAnimation: false,
-};
 // 容器内高度
 const itemsHeight = 60;
 // 间距
@@ -18,7 +11,7 @@ const itemsDistance = 12;
 const dragZ = 100;
 
 export default function Demo() {
-  const [memoryItems, setMemoryItems] = useState([
+  const [data, setData] = useState([
     {
       _id: '0',
       translateY: 0,
@@ -61,6 +54,9 @@ export default function Demo() {
   const [dragY, setDragY] = useState(0);
   const [dragIndex, setDragIndex] = useState<number>();
   const [device, setDevice] = useState(Taro.getSystemInfoSync);
+  //滑块移动标记
+  const [swap, setSwap] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0);
 
   Taro.useLaunch(() => {
     setDevice(Taro.getSystemInfoSync());
@@ -70,8 +66,8 @@ export default function Demo() {
    * 页面滚动事件
    * @param e
    */
-  const memoryBoxScrollHandler = (e: { detail: { scrollTop: number } }) => {
-    scrollTop = e.detail.scrollTop;
+  const scrollHandler = (e: { detail: { scrollTop: number } }) => {
+    setScrollTop(e.detail.scrollTop);
   };
 
   const longPressHandler = (e: any, index: number) => {
@@ -122,7 +118,7 @@ export default function Demo() {
     const { pageY: y } = e.changedTouches[0];
     const locateY = y + scrollTop - device.statusBarHeight!;
 
-    const locateIndex = memoryItems.findIndex(
+    const locateIndex = data.findIndex(
       (item) =>
         item.translateY <= locateY && item.translateY + itemsHeight >= locateY,
     );
@@ -130,8 +126,8 @@ export default function Demo() {
       //没有落在指定区域，不交换方块
       return;
     }
-    const locateItem = memoryItems[locateIndex];
-    const dragItem = memoryItems[dragIndex!];
+    const locateItem = data[locateIndex];
+    const dragItem = data[dragIndex!];
     if (!dragging) {
       //已经释放拖动方块了，结束
       return;
@@ -159,7 +155,7 @@ export default function Demo() {
     }[];
     if (moveBackward) {
       //dragItem向后移动，dragItem和locateItem之间的方块都要向前移动
-      moveItems = memoryItems.filter(
+      moveItems = data.filter(
         (item) =>
           //在locateItem和dragItem之间的方块需要向前移动
           item.translateY > dragItem.translateY &&
@@ -167,7 +163,7 @@ export default function Demo() {
       );
     } else {
       //dragItem向前移动，dragItem和locateItem之间的方块都要向后移动
-      moveItems = memoryItems.filter(
+      moveItems = data.filter(
         (item) =>
           //在locateItem和dragItem之间的方块需要向后移动
           item.translateY < dragItem.translateY &&
@@ -181,7 +177,7 @@ export default function Demo() {
     }
 
     //开始准备移动
-    swap = true;
+    setSwap(true);
 
     console.log(
       moveBackward,
@@ -207,8 +203,8 @@ export default function Demo() {
       }
     });
 
-    setMemoryItems(memoryItems);
-    swap = false;
+    setData(data);
+    setSwap(false);
   };
 
   /**
@@ -218,8 +214,8 @@ export default function Demo() {
     const singleTranslateY = itemsHeight + itemsDistance;
 
     const adjustList: any[] = [];
-    for (let index in memoryItems) {
-      const memoryItem = memoryItems[index];
+    for (let index in data) {
+      const memoryItem = data[index];
       const yIndex = memoryItem.translateY / singleTranslateY;
       adjustList.push({
         _id: memoryItem._id,
@@ -230,10 +226,10 @@ export default function Demo() {
   };
 
   return (
-    <View className={`container ${editMemoryBox.editing ? 'blur' : ''}`}>
+    <View className="container">
       <ScrollView
         scrollY={!dragging}
-        onScroll={memoryBoxScrollHandler}
+        onScroll={scrollHandler}
         style={{
           height: '100%',
           boxSizing: 'border-box',
@@ -241,19 +237,19 @@ export default function Demo() {
         enableBackToTop
       >
         <View
-          className="memory-box"
+          className="box"
           style={{
             padding: '12px',
             height: `${
-              (memoryItems.length / 2) * (itemsHeight + itemsDistance) +
-              (memoryItems.length % 2) * itemsHeight +
+              (data.length / 2) * (itemsHeight + itemsDistance) +
+              (data.length % 2) * itemsHeight +
               50
             }px`,
           }}
         >
-          {memoryItems.map((item, index) => (
+          {data.map((item, index) => (
             <View
-              className={`memory-item flex-column ${
+              className={`item ${
                 dragging && index == dragIndex
                   ? 'active-item'
                   : 'transition-item'
